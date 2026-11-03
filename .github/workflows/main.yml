@@ -3,7 +3,9 @@ name: Build ABYSS for TI-84 Plus CE
 
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 permissions:
@@ -11,27 +13,43 @@ permissions:
 
 jobs:
   build:
+    name: Compile ABYSS
     runs-on: ubuntu-latest
+
     steps:
       - name: Download ABYSS source
         uses: actions/checkout@v4
 
-      - name: Install CEdev
-        uses: gavinhsmith/setup-ti84-ce-toolchain@v1
+      - name: Install CEdev toolchain
+        uses: gavinhsmith/setup-ti84-ce-toolchain@main
         with:
           version: v14.2
 
-      - name: Run tests
+      - name: Make test scripts executable
+        run: chmod +x tests/*.sh
+
+      - name: Run game tests
         run: ./tests/run_tests.sh
 
-      - name: Compile ABYSS
+      - name: Compile calculator game
         run: make
 
-      - name: Check executable
-        run: test -s bin/ABYSS.8xp
+      - name: Check generated 8XP file
+        run: |
+          if [ ! -s bin/ABYSS.8xp ]; then
+            echo "ERROR: ABYSS.8xp was not generated!"
+            echo "Build output files:"
+            find . -maxdepth 3 -type f
+            exit 1
+          fi
 
-      - name: Upload calculator game
+          echo "SUCCESS: ABYSS.8xp was created!"
+          ls -lh bin/ABYSS.8xp
+
+      - name: Upload ABYSS calculator game
         uses: actions/upload-artifact@v4
         with:
           name: ABYSS-8XP
           path: bin/ABYSS.8xp
+          if-no-files-found: error
+          retention-days: 30
