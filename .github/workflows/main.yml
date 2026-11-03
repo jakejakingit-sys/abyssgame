@@ -1,0 +1,37 @@
+
+name: Build ABYSS for TI-84 Plus CE
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download ABYSS source
+        uses: actions/checkout@v4
+
+      - name: Install CEdev
+        uses: gavinhsmith/setup-ti84-ce-toolchain@v1
+        with:
+          version: v14.2
+
+      - name: Run tests
+        run: ./tests/run_tests.sh
+
+      - name: Compile ABYSS
+        run: make
+
+      - name: Check executable
+        run: test -s bin/ABYSS.8xp
+
+      - name: Upload calculator game
+        uses: actions/upload-artifact@v4
+        with:
+          name: ABYSS-8XP
+          path: bin/ABYSS.8xp
